@@ -11,6 +11,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const agentFlowContainer = document.getElementById('agentFlowContainer');
     const statusMessage = document.getElementById('statusMessage');
 
+    // Q&A Chat Box elements
+    const qnaBar = document.getElementById('qnaBar');
+    const qnaChatToggle = document.getElementById('qnaChatToggle');
+    const qnaClose = document.getElementById('qnaClose');
+    const qnaQuestions = document.getElementById('qnaQuestions');
+
     // Load Agent Flow HTML
     try {
         const response = await fetch('agents.html');
@@ -42,6 +48,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     } else {
         console.error("Modal elements not found");
+    }
+
+    // Q&A Chat Box toggle
+    if (qnaChatToggle && qnaBar) {
+        qnaChatToggle.addEventListener('click', () => {
+            qnaBar.classList.toggle('open');
+        });
+    }
+
+    if (qnaClose && qnaBar) {
+        qnaClose.addEventListener('click', () => {
+            qnaBar.classList.remove('open');
+        });
     }
 
     // Onboarding Logic
@@ -205,8 +224,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         resultsArea.classList.add('hidden');
         agentFlowArea.classList.add('hidden');
         welcomePanel.classList.remove('hidden'); // Go back to welcome
+        qnaBar.classList.add('hidden'); // Hide Q&A bar
         form.reset();
         programsList.innerHTML = '';
+        qnaQuestions.innerHTML = ''; // Clear Q&A
         currentStep = 1;
         showStep(1);
     });
@@ -232,6 +253,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusMessage.textContent = "Plan Generated Successfully!";
             markAllAgentsDone();
             updateSidebar('timeline');
+
+            // Show Q&A bar if questions are available
+            if (data.data.qna_questions && data.data.qna_questions.length > 0) {
+                renderQNA(data.data.qna_questions);
+                qnaBar.classList.remove('hidden');
+            }
         } else if (data.type === 'error') {
             alert('Error: ' + data.message);
             setLoading(false);
@@ -336,6 +363,69 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
 
             programsList.appendChild(card);
+        });
+    }
+
+    // Render Q&A questions
+    function renderQNA(qnaData) {
+        qnaQuestions.innerHTML = '';
+
+        // Update badge count
+        const chatBadge = document.querySelector('.chat-badge');
+        if (chatBadge) {
+            chatBadge.textContent = qnaData.length;
+        }
+
+        qnaData.forEach((qna, index) => {
+            const qnaItem = document.createElement('div');
+            qnaItem.className = 'qna-item';
+
+            const categoryBadge = `<span class="qna-category-badge ${qna.category}">${qna.category}</span>`;
+
+            qnaItem.innerHTML = `
+                <button class="qna-question-btn" data-index="${index}" aria-expanded="false">
+                    <span>
+                        ${qna.question}
+                        ${categoryBadge}
+                    </span>
+                    <span class="qna-question-icon">▼</span>
+                </button>
+                <div class="qna-answer" id="qna-answer-${index}">
+                    <p class="qna-answer-text">${qna.answer}</p>
+                </div>
+            `;
+
+            qnaQuestions.appendChild(qnaItem);
+        });
+
+        // Add click handlers for questions
+        document.querySelectorAll('.qna-question-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const index = this.getAttribute('data-index');
+                const answer = document.getElementById(`qna-answer-${index}`);
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+
+                // Close all others
+                document.querySelectorAll('.qna-question-btn').forEach(b => {
+                    if (b !== this) {
+                        b.classList.remove('active');
+                        b.setAttribute('aria-expanded', 'false');
+                        const otherIndex = b.getAttribute('data-index');
+                        document.getElementById(`qna-answer-${otherIndex}`).classList.remove('expanded');
+                    }
+                });
+
+                // Toggle current
+                if (isExpanded) {
+                    this.classList.remove('active');
+                    this.setAttribute('aria-expanded', 'false');
+                    answer.classList.remove('expanded');
+                } else {
+                    this.classList.add('active');
+                    this.setAttribute('aria-expanded', 'true');
+                    answer.classList.add('expanded');
+                }
+            });
         });
     }
 });

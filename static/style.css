@@ -949,3 +949,317 @@ select:focus {
         font-size: 2rem;
     }
 }
+
+/* Q&A Chat Box */
+.qna-chatbox {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 1000;
+    font-family: inherit;
+}
+
+/* Floating chat toggle button */
+.qna-chat-toggle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-color), #60a5fa);
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.qna-chat-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(59, 130, 246, 0.6);
+}
+
+.qna-chat-toggle .chat-icon {
+    font-size: 1.8rem;
+}
+
+.qna-chat-toggle .chat-icon-img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.qna-chat-toggle .chat-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: var(--error-color);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+/* Chat window */
+.qna-chat-window {
+    position: absolute;
+    bottom: 75px;
+    right: 0;
+    width: 380px;
+    max-height: 600px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    pointer-events: none;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.qna-chatbox.open .qna-chat-window {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: all;
+}
+
+.qna-chatbox.open .qna-chat-toggle {
+    background: var(--surface-color);
+}
+
+/* Chat header */
+.qna-chatbox .qna-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: rgba(15, 23, 42, 0.9);
+    border-bottom: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.qna-chatbox .qna-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-color);
+}
+
+.qna-chatbox .qna-title {
+    flex: 1;
+}
+
+.qna-chatbox .qna-title h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.qna-chatbox .qna-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.qna-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.qna-close:hover {
+    color: var(--text-primary);
+}
+
+/* Chat questions area */
+.qna-chatbox .qna-questions {
+    padding: var(--space-md);
+    overflow-y: auto;
+    max-height: 500px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-color) rgba(255, 255, 255, 0.1);
+}
+
+.qna-chatbox .qna-questions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.qna-chatbox .qna-questions::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.qna-chatbox .qna-questions::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
+}
+
+.qna-item {
+    margin-bottom: var(--space-sm);
+}
+
+.qna-question-btn {
+    width: 100%;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    color: var(--accent-color);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.qna-question-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: translateX(2px);
+}
+
+.qna-question-btn.active {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: var(--accent-color);
+}
+
+.qna-question-icon {
+    font-size: 1rem;
+    transition: transform 0.3s;
+    margin-left: var(--space-xs);
+}
+
+.qna-question-btn.active .qna-question-icon {
+    transform: rotate(180deg);
+}
+
+.qna-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+    margin-top: var(--space-xs);
+}
+
+.qna-answer.expanded {
+    max-height: 300px;
+    padding: var(--space-sm);
+}
+
+.qna-answer-text {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+.qna-source {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-style: italic;
+    margin-top: var(--space-xs);
+}
+
+.qna-category-badge {
+    display: inline-block;
+    padding: 0.15rem 0.4rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    margin-left: var(--space-xs);
+    opacity: 0.8;
+}
+
+.qna-category-badge.country {
+    background: rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
+}
+
+.qna-category-badge.tests {
+    background: rgba(34, 197, 94, 0.2);
+    color: #4ade80;
+}
+
+.qna-category-badge.documents {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.qna-category-badge.visa {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.qna-category-badge.sop {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+.qna-category-badge.general {
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .qna-chatbox {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+    }
+
+    .qna-chat-toggle {
+        width: 56px;
+        height: 56px;
+    }
+
+    .qna-chat-toggle .chat-icon {
+        font-size: 1.6rem;
+    }
+
+    .qna-chat-window {
+        width: auto;
+        left: 0;
+        right: 0;
+        bottom: 70px;
+        max-height: 70vh;
+    }
+
+    .qna-chatbox .qna-questions {
+        max-height: calc(70vh - 80px);
+    }
+
+    .qna-chatbox .qna-header {
+        padding: var(--space-sm);
+    }
+
+    .qna-chatbox .qna-title h3 {
+        font-size: 0.95rem;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .qna-chat-window {
+        max-height: 80vh;
+    }
+
+    .qna-chatbox .qna-questions {
+        max-height: calc(80vh - 80px);
+    }
+}
