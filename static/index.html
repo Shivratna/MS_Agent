@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MS Application Agent | AI Counselor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="container">
+        <header class="logoheader">
+            <h1>🎓 MS Application Assistant</h1>
+            <button id="aboutAgentsBtn" class="about-agents-btn">ℹ️ About Agents</button>
+            <p class="subtitle">Your AI-powered study abroad counselor</p>
+        </header>
+
+        <main>
+            <form id="profileForm" class="glass-panel">
+                <div class="form-section">
+                    <h2>Student Profile</h2>
+
+                    <div class="input-group">
+                        <label for="gpa">GPA (Scale of 4.0)</label>
+                        <input type="number" id="gpa" name="gpa" step="0.01" min="0" max="4.0" required
+                            placeholder="e.g. 3.6">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="target_degree">Target Degree</label>
+                        <input type="text" id="target_degree" name="target_degree" required
+                            placeholder="e.g. MS in Computer Science">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="target_countries">Target Countries (comma separated)</label>
+                        <input type="text" id="target_countries" name="target_countries" required
+                            placeholder="e.g. Germany, USA, Canada">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h2>Preferences & Scores</h2>
+
+                    <div class="input-group">
+                        <label for="budget">Budget Range</label>
+                        <select id="budget" name="budget">
+                            <option value="Low (< $20k)">Low (< $20k)</option>
+                            <option value="Medium ($20k - $50k)" selected>Medium ($20k - $50k)</option>
+                            <option value="High (> $50k)">High (> $50k)</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="target_intake">Target Intake</label>
+                        <input type="text" id="target_intake" name="target_intake" required
+                            placeholder="e.g. Fall 2025">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="interests">Research Interests (comma separated)</label>
+                        <input type="text" id="interests" name="interests" required
+                            placeholder="e.g. AI, Machine Learning, Robotics">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Test Scores (Optional)</label>
+                        <div class="test-scores-grid">
+                            <input type="text" id="gre_score" placeholder="GRE (e.g. 320)">
+                            <input type="text" id="toefl_score" placeholder="TOEFL (e.g. 100)">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="cta-button">
+                    <span class="btn-text">Generate Plan</span>
+                    <span class="btn-loader hidden"></span>
+                </button>
+            </form>
+
+            <!-- Agent Flow Visualization -->
+            <div id="agentFlowArea" class="hidden">
+                <h3 class="flow-title">AI Agents at Work</h3>
+                <div id="agentFlowContainer"></div>
+                <div id="statusMessage" class="status-message">Initializing...</div>
+            </div>
+
+            <div id="resultsArea" class="hidden">
+                <div class="results-header">
+                    <h2>Your Personalized Plan</h2>
+                    <button id="resetBtn" class="secondary-button">Start Over</button>
+                </div>
+                <div id="programsList" class="programs-grid">
+                    <!-- Programs will be injected here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Agent Documentation Modal -->
+    <div id="agentModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>🤖 AI Agents Architecture</h2>
+
+            <div class="agent-flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <div class="flow-details">
+                        <h3>👤 Profile Intake Agent</h3>
+                        <p><strong>Purpose:</strong> Normalizes and validates student profile data</p>
+                        <p><strong>Input:</strong> Raw form data (GPA, interests, test scores, etc.)</p>
+                        <p><strong>Output:</strong> Structured StudentProfile object</p>
+                    </div>
+                </div>
+
+                <div class="flow-arrow-down">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <div class="flow-details">
+                        <h3>🔍 Program Search Agent</h3>
+                        <p><strong>Purpose:</strong> Finds and ranks matching programs</p>
+                        <p><strong>Input:</strong> StudentProfile</p>
+                        <p><strong>Output:</strong> List of top matching Program objects</p>
+                        <p><strong>Method:</strong> Uses AI to match profile with university database and rank by fit
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flow-arrow-down">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <div class="flow-details">
+                        <h3>📄 Requirements Parser Agent</h3>
+                        <p><strong>Purpose:</strong> Extracts admission requirements from university websites</p>
+                        <p><strong>Input:</strong> Program details</p>
+                        <p><strong>Output:</strong> ProgramRequirements (documents, tests, deadlines)</p>
+                        <p><strong>Method:</strong> Web scraping + AI extraction of structured data</p>
+                    </div>
+                </div>
+
+                <div class="flow-arrow-down">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <div class="flow-details">
+                        <h3>📅 Timeline Planner Agent</h3>
+                        <p><strong>Purpose:</strong> Creates personalized application timeline</p>
+                        <p><strong>Input:</strong> StudentProfile + Program + Requirements</p>
+                        <p><strong>Output:</strong> Chronological list of Tasks with deadlines</p>
+                        <p><strong>Method:</strong> AI-powered backward planning from application deadline</p>
+                    </div>
+                </div>
+
+                <div class="flow-arrow-down">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">5</div>
+                    <div class="flow-details">
+                        <h3>✅ Checklist Validator Agent</h3>
+                        <p><strong>Purpose:</strong> Validates timeline against requirements</p>
+                        <p><strong>Input:</strong> Timeline + Requirements</p>
+                        <p><strong>Output:</strong> List of warnings/inconsistencies</p>
+                        <p><strong>Method:</strong> AI-powered consistency checking</p>
+                    </div>
+                </div>
+
+                <div class="flow-result">
+                    <h3>📋 Final Output</h3>
+                    <p>Personalized application plan with timelines, requirements, and warnings for each matched
+                        program!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
