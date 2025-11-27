@@ -37,6 +37,14 @@ class Task:
     status: str = "Pending"
 
 @dataclass
+class QNAPair:
+    """Q&A pair for curated student questions"""
+    question: str  # Max 30 characters
+    answer: str    # Max 30 words
+    category: str  # e.g., "germany", "tests", "documents", "visa"
+    status: str = "Pending"
+
+@dataclass
 class AgentOutput:
     success: bool
     data: any

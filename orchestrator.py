@@ -7,6 +7,7 @@ from agents.program_search import ProgramSearchAgent
 from agents.requirements_parser import RequirementsParserAgent
 from agents.timeline_planner import TimelinePlannerAgent
 from agents.checklist_validator import ChecklistValidatorAgent
+from agents.qna_generator import QNAGeneratorAgent
 from models import StudentProfile, Program, ProgramRequirements, Task
 import requests
 from bs4 import BeautifulSoup
@@ -20,6 +21,7 @@ class Orchestrator:
         self.requirements_agent = RequirementsParserAgent(self.client)
         self.timeline_agent = TimelinePlannerAgent(self.client)
         self.validator_agent = ChecklistValidatorAgent(self.client)
+        self.qna_agent = QNAGeneratorAgent(self.client)
 
     def _fetch_program_details_real(self, program: Program) -> str:
         """
@@ -128,4 +130,14 @@ class Orchestrator:
 
         # Convert profile to dict as well
         results["profile"] = asdict(profile)
+        
+        # Generate Q&A pairs (single API call - free tier safe)
+        yield {"type": "status", "agent": "QNAGenerator", "message": "Generating helpful Q&A for your journey..."}
+        try:
+            qna_pairs = self.qna_agent.generate_questions(profile, programs)
+            results["qna_questions"] = [asdict(q) for q in qna_pairs]
+        except Exception as e:
+            print(f"Error generating Q&A: {e}")
+            results["qna_questions"] = []  # Empty list on error, non-blocking
+        
         yield {"type": "result", "data": results}
