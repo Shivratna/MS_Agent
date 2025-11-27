@@ -2,50 +2,7 @@ import json
 from typing import List
 from models import StudentProfile, Program
 from utils.gemini_client import GeminiClient
-
-# Mock Data
-MOCK_PROGRAMS = [
-    {
-        "name": "MS in Computer Science",
-        "university": "Technical University of Munich",
-        "country": "Germany",
-        "tuition_range": "0 - 1500 EUR/semester",
-        "application_deadline": "2025-05-31",
-        "eligibility_criteria": "GPA > 3.0, GRE optional, IELTS 6.5"
-    },
-    {
-        "name": "MS in Data Science",
-        "university": "RWTH Aachen",
-        "country": "Germany",
-        "tuition_range": "0 EUR/semester",
-        "application_deadline": "2025-03-01",
-        "eligibility_criteria": "GPA > 3.2, GRE required, TOEFL 90"
-    },
-    {
-        "name": "Master of Computer Science",
-        "university": "University of Illinois Urbana-Champaign",
-        "country": "USA",
-        "tuition_range": "$40,000 - $50,000/year",
-        "application_deadline": "2025-01-15",
-        "eligibility_criteria": "GPA > 3.5, GRE required, TOEFL 100"
-    },
-    {
-        "name": "MS in AI",
-        "university": "University of Amsterdam",
-        "country": "Netherlands",
-        "tuition_range": "15,000 EUR/year",
-        "application_deadline": "2025-04-01",
-        "eligibility_criteria": "GPA > 3.0, Strong Math background"
-    },
-    {
-        "name": "MS in Software Engineering",
-        "university": "San Jose State University",
-        "country": "USA",
-        "tuition_range": "$20,000 - $30,000/year",
-        "application_deadline": "2025-02-20",
-        "eligibility_criteria": "GPA > 3.0, GRE optional"
-    }
-]
+from pydantic import BaseModel, Field
 
 class ProgramSearchAgent:
     def __init__(self, client: GeminiClient):
@@ -53,39 +10,49 @@ class ProgramSearchAgent:
 
     def search(self, profile: StudentProfile) -> List[Program]:
         """
-        Filters and ranks mock programs based on the student profile using Gemini.
+        Uses Gemini AI to generate relevant program recommendations based on student profile.
         """
-        # 1. Basic filtering (Python side) - e.g., Country
-        filtered_programs = [
-            p for p in MOCK_PROGRAMS 
-            if any(c.lower() in p['country'].lower() for c in profile.target_countries) 
-            or "Any" in profile.target_countries
-        ]
         
-        if not filtered_programs:
-            # Fallback if strict filtering fails
-            filtered_programs = MOCK_PROGRAMS
-
-        # 2. Ranking with Gemini
         prompt = f"""
-        You are an expert study abroad counselor.
-        Rank the following programs for this student profile.
-        Select the top 3 best fits.
-        For each selected program, provide a brief 'match_reasoning' explaining why it fits.
-
-        Student Profile:
-        {profile}
-
-        Available Programs:
-        {json.dumps(filtered_programs, indent=2)}
-
-        Return a JSON list of the top 3 programs with their original fields plus 'match_reasoning'.
+        You are an expert study abroad counselor with extensive knowledge of Master's programs worldwide.
+        
+        Generate EXACTLY 3 realistic Master's program recommendations for this student:
+        
+        **Student Profile:**
+        - Target Degree: {profile.target_degree}
+        - Target Countries: {', '.join(profile.target_countries)}
+        - GPA: {profile.gpa}/4.0
+        - Interests: {', '.join(profile.interests)}
+        - Budget: {profile.budget}
+        - Target Intake: {profile.target_intake}
+        - Test Scores: {profile.test_scores if profile.test_scores else 'Not provided'}
+        
+        **Generate 3 real, well-known programs that:**
+        1. Match the student's target degree field
+        2. Are in their target countries
+        3. Align with their budget range
+        4. Match their GPA level (realistic admissions chances)
+        5. Are actual programs at real universities (not made up)
+        
+        **For each program provide:**
+        - name: Full program name (e.g., "MS in Economics", "Master of Economics")
+        - university: Real university name
+        - country: Country name
+        - tuition_range: Realistic tuition estimate (e.g., "$30,000-$40,000/year", "€500/semester")
+        - application_deadline: Realistic deadline in YYYY-MM-DD format
+        - eligibility_criteria: Brief criteria (GPA, tests, etc.)
+        - match_reasoning: 1-2 sentences explaining why this program fits the student
+        
+        **Important:**
+        - Use REAL universities and programs
+        - Match the degree field they requested (don't suggest CS if they want Economics!)
+        - Consider budget constraints
+        - Provide realistic deadlines (typically 3-8 months from now)
+        
+        Return as JSON with a "programs" array containing exactly 3 programs.
         """
 
         try:
-            # We can use a schema for strict output, or just ask for JSON
-            # Using schema for robustness
-            from pydantic import BaseModel, Field
             class RankedProgram(BaseModel):
                 name: str
                 university: str
@@ -95,21 +62,41 @@ class ProgramSearchAgent:
                 eligibility_criteria: str
                 match_reasoning: str
 
-            class RankedList(BaseModel):
+            class ProgramList(BaseModel):
                 programs: List[RankedProgram]
 
             response_text = self.client.generate_content(
                 prompt=prompt,
-                response_schema=RankedList
+                response_schema=ProgramList
             )
             
             data = json.loads(response_text)
             results = []
-            for p_data in data.get('programs', []):
+            for p_data in data.get('programs', [])[:3]:  # Ensure max 3
                 results.append(Program(**p_data))
+            
+            if len(results) == 0:
+                # Fallback if AI fails
+                return self._get_fallback_programs(profile)
+            
             return results
 
         except Exception as e:
             print(f"Error in ProgramSearchAgent: {e}")
-            # Fallback: return first 3 filtered
-            return [Program(**p) for p in filtered_programs[:3]]
+            return self._get_fallback_programs(profile)
+    
+    def _get_fallback_programs(self, profile: StudentProfile) -> List[Program]:
+        """Fallback generic programs if AI fails"""
+        degree_field = profile.target_degree.split(' in ')[-1] if ' in ' in profile.target_degree else profile.target_degree
+        
+        return [
+            Program(
+                name=f"Master's in {degree_field}",
+                university="University (AI search unavailable)",
+                country=profile.target_countries[0] if profile.target_countries else "USA",
+                tuition_range=profile.budget,
+                application_deadline="2025-12-31",
+                eligibility_criteria="GPA 3.0+",
+                match_reasoning="Fallback program - AI search encountered an error. Please verify details."
+            )
+        ]

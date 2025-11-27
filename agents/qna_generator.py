@@ -1,12 +1,7 @@
 import json
 from typing import List
-from pydantic import BaseModel, Field
 from models import StudentProfile, Program, QNAPair
 from utils.gemini_client import GeminiClient
-
-class QNASchema(BaseModel):
-    """Schema for Q&A generation response"""
-    qna_pairs: List[dict]
 
 class QNAGeneratorAgent:
     """Generates curated Q&A pairs based on student profile and shortlisted programs"""
@@ -50,8 +45,7 @@ class QNAGeneratorAgent:
            - End with "Source: General knowledge"
         
         3. **Categories**: 
-           - Use one of: "country", "tests", "documents", "visa", "sop"
-           - Helps with organizing questions
+           - Use one of: "country", "tests", "documents", "visa", "sop", "general"
         
         4. **Prioritize**:
            - Country-specific requirements (e.g., APS for Germany, blocked account)
@@ -60,9 +54,7 @@ class QNAGeneratorAgent:
            - Visa process timing
            - Common pitfalls
         
-        **Format**: Return as JSON list of objects with keys: question, answer, category
-        
-        **Example for a Germany applicant**:
+        **Return ONLY valid JSON in this exact format (no markdown, no extra text):**
         {{
           "qna_pairs": [
             {{"question": "What is APS certificate?", "answer": "APS is mandatory for Indians applying to Germany. Verify documents at APS center. Costs ~₹18k, takes 2-3 months. Source: General knowledge", "category": "country"}},
@@ -73,14 +65,20 @@ class QNAGeneratorAgent:
           ]
         }}
         
-        **Important**: Generate questions relevant to {countries} and avoid generic advice.
+        **Important**: Generate questions relevant to {countries} and the degree {profile.target_degree}. Return ONLY the JSON object, nothing else.
         """
         
         try:
-            response_text = self.client.generate_content(
-                prompt=prompt,
-                response_schema=QNASchema
-            )
+            # Use simple generate_content without schema
+            response_text = self.client.client.generate_content(prompt).text.strip()
+            
+            # Clean response (remove markdown code blocks if present)
+            if response_text.startswith('```'):
+                # Extract JSON from markdown code block
+                lines = response_text.split('\n')
+                response_text = '\n'.join([line for line in lines if not line.startswith('```')])
+                response_text = response_text.strip()
+            
             data = json.loads(response_text)
             
             qna_pairs = []
