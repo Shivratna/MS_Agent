@@ -44,6 +44,94 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Modal elements not found");
     }
 
+    // Onboarding Logic
+    const welcomePanel = document.getElementById('welcomePanel');
+    const startPlanningBtn = document.getElementById('startPlanningBtn');
+
+    startPlanningBtn.addEventListener('click', () => {
+        welcomePanel.classList.add('hidden');
+        form.classList.remove('hidden');
+        updateSidebar('profile');
+    });
+
+    // Stepper Logic
+    let currentStep = 1;
+    const totalSteps = 3;
+    const nextBtn = document.getElementById('nextBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    // submitBtn is already defined at the top, we'll use that
+    const formSteps = document.querySelectorAll('.form-step');
+
+    // Initialize first step
+    showStep(currentStep);
+
+    nextBtn.addEventListener('click', () => {
+        if (validateStep(currentStep)) {
+            currentStep++;
+            showStep(currentStep);
+        }
+    });
+
+    prevBtn.addEventListener('click', () => {
+        currentStep--;
+        showStep(currentStep);
+    });
+
+    function showStep(step) {
+        formSteps.forEach(el => el.classList.remove('active'));
+        document.querySelector(`.form-step[data-step="${step}"]`).classList.add('active');
+
+        // Button State
+        prevBtn.classList.toggle('hidden', step === 1);
+
+        if (step === totalSteps) {
+            nextBtn.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+        } else {
+            nextBtn.classList.remove('hidden');
+            submitBtn.classList.add('hidden');
+        }
+
+        // Update Sidebar
+        updateSidebar(step);
+    }
+
+    function validateStep(step) {
+        const currentStepEl = document.querySelector(`.form-step[data-step="${step}"]`);
+        const inputs = currentStepEl.querySelectorAll('input, select');
+        let isValid = true;
+
+        inputs.forEach(input => {
+            if (!input.checkValidity()) {
+                isValid = false;
+                input.reportValidity();
+            }
+        });
+
+        return isValid;
+    }
+
+    function updateSidebar(stepOrId) {
+        // Map step numbers to IDs
+        const stepMap = {
+            1: 'profile',
+            2: 'profile', // Keep profile active for preferences too
+            3: 'profile',
+            'shortlist': 'shortlist',
+            'requirements': 'requirements',
+            'timeline': 'timeline'
+        };
+
+        const activeId = stepMap[stepOrId] || stepOrId;
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+            if (item.dataset.step === activeId) {
+                item.classList.add('active');
+            }
+        });
+    }
+
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -52,6 +140,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         form.classList.add('hidden'); // Hide form
         agentFlowArea.classList.remove('hidden');
         resultsArea.classList.add('hidden');
+        updateSidebar('shortlist'); // Move to next sidebar state
         resetAgents();
 
         // Gather Data
@@ -115,9 +204,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     resetBtn.addEventListener('click', () => {
         resultsArea.classList.add('hidden');
         agentFlowArea.classList.add('hidden');
-        form.classList.remove('hidden');
+        welcomePanel.classList.remove('hidden'); // Go back to welcome
         form.reset();
         programsList.innerHTML = '';
+        currentStep = 1;
+        showStep(1);
     });
 
     function setLoading(isLoading) {
@@ -140,6 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             setLoading(false);
             statusMessage.textContent = "Plan Generated Successfully!";
             markAllAgentsDone();
+            updateSidebar('timeline');
         } else if (data.type === 'error') {
             alert('Error: ' + data.message);
             setLoading(false);
@@ -197,6 +289,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.className = 'program-card';
             card.style.animationDelay = `${index * 0.1}s`;
 
+            // Timeline items
             let timelineHtml = timeline.map(task => `
                 <li class="timeline-item">
                     <div class="timeline-icon">📅</div>
@@ -229,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 
                 <div class="program-meta">
-                    <span>💰 ${prog.tuition_range}</span>
+                    <span class="tag">💰 ${prog.tuition_range}</span>
                 </div>
 
                 <div class="timeline-section">

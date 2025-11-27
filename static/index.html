@@ -18,93 +18,155 @@
         <div class="blob blob-3"></div>
     </div>
 
-    <div class="container">
-        <header class="logoheader">
-            <h1>🎓 MS Application Assistant</h1>
-            <button id="aboutAgentsBtn" class="about-agents-btn">ℹ️ About Agents</button>
-            <p class="subtitle">Your AI-powered study abroad counselor</p>
-        </header>
+    <div class="app-layout">
+        <!-- App Bar -->
+        <nav class="app-bar">
+            <div class="app-logo">
+                <span>🎓</span> MS Agent
+            </div>
+            <div class="user-status">
+                <button id="aboutAgentsBtn" class="help-btn">ℹ️ About Agents</button>
+            </div>
+        </nav>
 
-        <main>
-            <form id="profileForm" class="glass-panel">
-                <div class="form-section">
-                    <h2>Student Profile</h2>
+        <div class="main-content">
+            <!-- Sidebar Navigation -->
+            <aside class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item active" data-step="profile">
+                        <span class="nav-icon">👤</span> Profile
+                    </li>
+                    <li class="nav-item" data-step="shortlist">
+                        <span class="nav-icon">🏫</span> Shortlist
+                    </li>
+                    <li class="nav-item" data-step="requirements">
+                        <span class="nav-icon">📄</span> Requirements
+                    </li>
+                    <li class="nav-item" data-step="timeline">
+                        <span class="nav-icon">📅</span> Timeline
+                    </li>
+                </ul>
+            </aside>
 
-                    <div class="input-group">
-                        <label for="gpa">GPA (Scale of 4.0)</label>
-                        <input type="number" id="gpa" name="gpa" step="0.01" min="0" max="4.0" required
-                            placeholder="e.g. 3.6">
+            <main>
+                <!-- Welcome Panel (Onboarding) -->
+                <section id="welcomePanel" class="glass-panel">
+                    <div class="welcome-content">
+                        <h2>Plan Your Master's Journey</h2>
+                        <p class="subtitle">Your AI-powered counselor for stress-free applications.</p>
+
+                        <div class="how-it-works">
+                            <div class="step-card">
+                                <span class="step-icon">1️⃣</span>
+                                <p>Tell us about your profile</p>
+                            </div>
+                            <div class="step-card">
+                                <span class="step-icon">2️⃣</span>
+                                <p>AI finds best programs</p>
+                            </div>
+                            <div class="step-card">
+                                <span class="step-icon">3️⃣</span>
+                                <p>Get a personalized plan</p>
+                            </div>
+                        </div>
+
+                        <button id="startPlanningBtn" class="cta-button">
+                            Start Planning
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Main Form (Stepper) -->
+                <form id="profileForm" class="glass-panel hidden">
+                    <div class="form-header">
+                        <h2>Student Profile</h2>
+                        <p class="form-subtitle">Let's get to know you better.</p>
                     </div>
 
-                    <div class="input-group">
-                        <label for="target_degree">Target Degree</label>
-                        <input type="text" id="target_degree" name="target_degree" required
-                            placeholder="e.g. MS in Computer Science">
-                    </div>
+                    <!-- Step 1: Profile -->
+                    <div class="form-step" data-step="1">
+                        <div class="input-group">
+                            <label for="gpa">GPA (Scale of 4.0)</label>
+                            <input type="number" id="gpa" name="gpa" step="0.01" min="0" max="4.0" required
+                                placeholder="e.g. 3.6">
+                        </div>
 
-                    <div class="input-group">
-                        <label for="target_countries">Target Countries (comma separated)</label>
-                        <input type="text" id="target_countries" name="target_countries" required
-                            placeholder="e.g. Germany, USA, Canada">
-                    </div>
-                </div>
+                        <div class="input-group">
+                            <label for="target_degree">Target Degree</label>
+                            <input type="text" id="target_degree" name="target_degree" required
+                                placeholder="e.g. MS in Computer Science">
+                        </div>
 
-                <div class="form-section">
-                    <h2>Preferences & Scores</h2>
-
-                    <div class="input-group">
-                        <label for="budget">Budget Range</label>
-                        <select id="budget" name="budget">
-                            <option value="Low (< $20k)">Low (< $20k)</option>
-                            <option value="Medium ($20k - $50k)" selected>Medium ($20k - $50k)</option>
-                            <option value="High (> $50k)">High (> $50k)</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="target_intake">Target Intake</label>
-                        <input type="text" id="target_intake" name="target_intake" required
-                            placeholder="e.g. Fall 2025">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="interests">Research Interests (comma separated)</label>
-                        <input type="text" id="interests" name="interests" required
-                            placeholder="e.g. AI, Machine Learning, Robotics">
-                    </div>
-
-                    <div class="input-group">
-                        <label>Test Scores (Optional)</label>
-                        <div class="test-scores-grid">
-                            <input type="text" id="gre_score" placeholder="GRE (e.g. 320)">
-                            <input type="text" id="toefl_score" placeholder="TOEFL (e.g. 100)">
+                        <div class="input-group">
+                            <label for="target_countries">Target Countries</label>
+                            <input type="text" id="target_countries" name="target_countries" required
+                                placeholder="e.g. Germany, USA, Canada">
                         </div>
                     </div>
+
+                    <!-- Step 2: Preferences -->
+                    <div class="form-step" data-step="2">
+                        <div class="input-group">
+                            <label for="budget">Budget Range</label>
+                            <select id="budget" name="budget">
+                                <option value="Low (< $20k)">Low (< $20k)</option>
+                                <option value="Medium ($20k - $50k)" selected>Medium ($20k - $50k)</option>
+                                <option value="High (> $50k)">High (> $50k)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="target_intake">Target Intake</label>
+                            <input type="text" id="target_intake" name="target_intake" required
+                                placeholder="e.g. Fall 2025">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="interests">Research Interests</label>
+                            <input type="text" id="interests" name="interests" required
+                                placeholder="e.g. AI, Machine Learning, Robotics">
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Scores -->
+                    <div class="form-step" data-step="3">
+                        <div class="input-group">
+                            <label>Test Scores (Optional)</label>
+                            <div class="test-scores-grid">
+                                <input type="text" id="gre_score" placeholder="GRE (e.g. 320)">
+                                <input type="text" id="toefl_score" placeholder="TOEFL (e.g. 100)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stepper-controls">
+                        <button type="button" id="prevBtn" class="btn-secondary hidden">Back</button>
+                        <button type="button" id="nextBtn" class="cta-button">Next</button>
+                        <button type="submit" id="submitBtn" class="cta-button hidden">
+                            <span class="btn-text">Generate Plan</span>
+                            <span class="btn-loader hidden"></span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Agent Flow Visualization -->
+                <div id="agentFlowArea" class="hidden">
+                    <h3 class="flow-title">AI Agents at Work</h3>
+                    <div id="agentFlowContainer"></div>
+                    <div id="statusMessage" class="status-message">Initializing...</div>
                 </div>
 
-                <button type="submit" class="cta-button">
-                    <span class="btn-text">Generate Plan</span>
-                    <span class="btn-loader hidden"></span>
-                </button>
-            </form>
-
-            <!-- Agent Flow Visualization -->
-            <div id="agentFlowArea" class="hidden">
-                <h3 class="flow-title">AI Agents at Work</h3>
-                <div id="agentFlowContainer"></div>
-                <div id="statusMessage" class="status-message">Initializing...</div>
-            </div>
-
-            <div id="resultsArea" class="hidden">
-                <div class="results-header">
-                    <h2>Your Personalized Plan</h2>
-                    <button id="resetBtn" class="secondary-button">Start Over</button>
+                <div id="resultsArea" class="hidden">
+                    <div class="results-header">
+                        <h2>Your Personalized Plan</h2>
+                        <button id="resetBtn" class="secondary-button">Start Over</button>
+                    </div>
+                    <div id="programsList" class="programs-grid">
+                        <!-- Programs will be injected here -->
+                    </div>
                 </div>
-                <div id="programsList" class="programs-grid">
-                    <!-- Programs will be injected here -->
-                </div>
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
     <!-- Agent Documentation Modal -->
