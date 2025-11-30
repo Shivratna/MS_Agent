@@ -69,8 +69,8 @@ class QNAGeneratorAgent:
         """
         
         try:
-            # Use simple generate_content without schema
-            response_text = self.client.client.generate_content(prompt).text.strip()
+            # Use GeminiClient's generate_content method without schema
+            response_text = self.client.generate_content(prompt=prompt).strip()
             
             # Clean response (remove markdown code blocks if present)
             if response_text.startswith('```'):
