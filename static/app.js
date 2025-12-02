@@ -151,33 +151,150 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    form.addEventListener('submit', async (e) => {
+    // Resume Text Paste Logic
+    const autoFillBtn = document.getElementById('autoFillBtn');
+    const resumeText = document.getElementById('resumeText');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const charCount = document.querySelector('.char-count');
+
+    if (resumeText && charCount) {
+        resumeText.addEventListener('input', () => {
+            const currentLength = resumeText.value.length;
+            charCount.textContent = `${currentLength}/5000`;
+            if (currentLength > 5000) {
+                charCount.style.color = 'var(--error-color)';
+            } else {
+                charCount.style.color = 'var(--text-tertiary)';
+            }
+        });
+    }
+
+    if (autoFillBtn && resumeText) {
+        autoFillBtn.addEventListener('click', async () => {
+            const text = resumeText.value.trim();
+            if (!text) {
+                alert("Please paste your resume text first.");
+                return;
+            }
+            if (text.length > 5000) {
+                alert("Text is too long. Please limit to 5000 characters.");
+                return;
+            }
+            await handleResumeParse(text);
+        });
+    }
+
+    async function handleResumeParse(text) {
+        uploadStatus.textContent = "Parsing resume... ⏳";
+        uploadStatus.className = "upload-status";
+        autoFillBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/parse-resume', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: text })
+            });
+
+            if (!response.ok) throw new Error("Parsing failed");
+
+            const result = await response.json();
+            if (result.success && result.data) {
+                populateForm(result.data);
+                uploadStatus.textContent = "Auto-filled! ✅";
+                uploadStatus.className = "upload-status success";
+            } else {
+                throw new Error("Parsing failed");
+            }
+        } catch (error) {
+            console.error(error);
+            uploadStatus.textContent = "Failed to parse ❌";
+            uploadStatus.className = "upload-status error";
+        } finally {
+            autoFillBtn.disabled = false;
+        }
+    }
+
+    function populateForm(data) {
+        // Helper to set value if exists
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && val !== undefined && val !== null && val !== 0 && val !== "") {
+                el.value = val;
+            }
+        };
+
+        setVal('gpa', data.gpa);
+        setVal('target_degree', data.target_degree);
+        setVal('undergrad_major', data.undergrad_major);
+        setVal('work_experience_years', data.work_experience_years);
+        setVal('backlogs', data.backlogs);
+        setVal('research_papers', data.research_papers);
+
+        // Handle Test Scores
+        if (data.test_scores) {
+            setVal('gre_score', data.test_scores.GRE);
+            setVal('toefl_score', data.test_scores.TOEFL);
+        }
+
+        // Handle Interests (array to string)
+        if (data.interests && Array.isArray(data.interests)) {
+            setVal('interests', data.interests.join(', '));
+        }
+    }
+
+    // Form Submission
+    submitBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
-        // Loading State
+        // Basic Validation
+        const requiredFields = ['gpa', 'target_degree', 'target_countries', 'target_intake', 'interests'];
+        const missing = requiredFields.filter(id => !document.getElementById(id).value);
+
+        if (missing.length > 0) {
+            alert(`Please fill in all required fields: ${missing.join(', ')}`);
+            return;
+        }
+
+        // UI Updates
         setLoading(true);
-        form.classList.add('hidden'); // Hide form
+        form.classList.add('hidden');
         agentFlowArea.classList.remove('hidden');
         resultsArea.classList.add('hidden');
-        updateSidebar('shortlist'); // Move to next sidebar state
-        resetAgents();
+        updateSidebar('shortlist');
 
-        // Gather Data
-        const formData = {
+        // Reset Flow Visualization
+        resetAgents(); // Renamed from resetAgentFlow to match existing function
+
+        // Collect Data
+        const formData = collectFormData();
+
+        // Start Streaming
+        await startPlanGeneration(formData);
+    });
+
+    function collectFormData() {
+        return {
             gpa: parseFloat(document.getElementById('gpa').value),
             target_degree: document.getElementById('target_degree').value,
             target_countries: document.getElementById('target_countries').value.split(',').map(s => s.trim()),
             budget: document.getElementById('budget').value,
             interests: document.getElementById('interests').value.split(',').map(s => s.trim()),
             target_intake: document.getElementById('target_intake').value,
-            test_scores: {}
+            undergrad_major: document.getElementById('undergrad_major').value,
+            work_experience_years: parseFloat(document.getElementById('work_experience_years').value) || 0,
+            backlogs: parseInt(document.getElementById('backlogs').value) || 0,
+            research_papers: parseInt(document.getElementById('research_papers').value) || 0,
+            test_scores: {
+                GRE: document.getElementById('gre_score').value,
+                TOEFL: document.getElementById('toefl_score').value
+            }
         };
+    }
 
-        const gre = document.getElementById('gre_score').value;
-        const toefl = document.getElementById('toefl_score').value;
-        if (gre) formData.test_scores['GRE'] = gre;
-        if (toefl) formData.test_scores['TOEFL'] = toefl;
-
+    async function startPlanGeneration(formData) {
         try {
             const response = await fetch('/api/generate-plan-stream', {
                 method: 'POST',
@@ -213,12 +330,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
             }
-
         } catch (error) {
             alert('Error generating plan: ' + error.message);
             setLoading(false);
         }
-    });
+    }
 
     resetBtn.addEventListener('click', () => {
         resultsArea.classList.add('hidden');
@@ -228,6 +344,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         form.reset();
         programsList.innerHTML = '';
         qnaQuestions.innerHTML = ''; // Clear Q&A
+
+        // Clear pills and export button
+        const pillsContainer = document.getElementById('universityPills');
+        if (pillsContainer) pillsContainer.innerHTML = '';
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) exportBtn.classList.add('hidden');
+
+        // Reset global state
+        allProgramsData = [];
+        currentProgramIndex = 0;
+
         currentStep = 1;
         showStep(1);
     });
@@ -299,25 +426,97 @@ document.addEventListener('DOMContentLoaded', async () => {
         statusMessage.textContent = "Initializing...";
     }
 
-    function renderResults(data) {
-        programsList.innerHTML = '';
+    // Global variable to store all programs data
+    let allProgramsData = [];
+    let currentProgramIndex = 0;
 
+    function renderResults(data) {
         if (!data.shortlist || data.shortlist.length === 0) {
             programsList.innerHTML = '<p>No programs found.</p>';
             return;
         }
 
-        data.shortlist.forEach((item, index) => {
+        // Store data globally
+        allProgramsData = data.shortlist;
+        currentProgramIndex = 0;
+
+        // Render university pills
+        renderUniversityPills();
+
+        // Render first program
+        renderSingleProgram(0);
+
+        // Show export button
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.classList.remove('hidden');
+        }
+    }
+
+    function renderUniversityPills() {
+        const pillsContainer = document.getElementById('universityPills');
+        pillsContainer.innerHTML = '';
+
+        allProgramsData.forEach((item, index) => {
             const prog = item.program;
-            const timeline = item.timeline;
-            const warnings = item.warnings;
+            const pill = document.createElement('div');
+            pill.className = `university-pill ${index === 0 ? 'active' : ''}`;
+            pill.dataset.index = index;
 
-            const card = document.createElement('div');
-            card.className = 'program-card';
-            card.style.animationDelay = `${index * 0.1}s`;
+            // Country flag mapping
+            const countryFlags = {
+                'USA': '🇺🇸',
+                'Germany': '🇩🇪',
+                'Canada': '🇨🇦',
+                'UK': '🇬🇧',
+                'Australia': '🇦🇺',
+                'France': '🇫🇷',
+                'Netherlands': '🇳🇱',
+                'Sweden': '🇸🇪'
+            };
 
-            // Timeline items
-            let timelineHtml = timeline.map(task => `
+            const flag = countryFlags[prog.country] || '🌍';
+
+            pill.innerHTML = `
+                <div class="pill-country">${flag}</div>
+                <div class="pill-name">${prog.university}</div>
+                <div class="pill-program">${prog.name.substring(0, 30)}${prog.name.length > 30 ? '...' : ''}</div>
+            `;
+
+            pill.addEventListener('click', () => switchProgram(index));
+            pillsContainer.appendChild(pill);
+        });
+    }
+
+    function switchProgram(index) {
+        currentProgramIndex = index;
+
+        // Update active pill
+        document.querySelectorAll('.university-pill').forEach((pill, i) => {
+            if (i === index) {
+                pill.classList.add('active');
+            } else {
+                pill.classList.remove('active');
+            }
+        });
+
+        // Render selected program
+        renderSingleProgram(index);
+    }
+
+    function renderSingleProgram(index) {
+        const item = allProgramsData[index];
+        const prog = item.program;
+        const timeline = item.timeline;
+        const warnings = item.warnings;
+
+        programsList.innerHTML = '';
+
+        const card = document.createElement('div');
+        card.className = 'program-card fade-in';
+
+        // Timeline items
+        let timelineHtml = timeline.map(task => `
                 <li class="timeline-item">
                     <div class="timeline-icon">📅</div>
                     <div class="timeline-content">
@@ -327,9 +526,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </li>
             `).join('');
 
-            let warningsHtml = '';
-            if (warnings && warnings.length > 0) {
-                warningsHtml = `
+        let warningsHtml = '';
+        if (warnings && warnings.length > 0) {
+            warningsHtml = `
                     <div class="warnings-section">
                         <h4>⚠️ Warnings</h4>
                         <div class="warning-box">
@@ -337,9 +536,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </div>
                 `;
-            }
+        }
 
-            card.innerHTML = `
+        card.innerHTML = `
                 <div class="program-header">
                     <div class="program-title">
                         <h3>${prog.name}</h3>
@@ -362,8 +561,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ${warningsHtml}
             `;
 
-            programsList.appendChild(card);
-        });
+        programsList.appendChild(card);
     }
 
     // Render Q&A questions
@@ -427,5 +625,50 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         });
+    }
+
+    // Excel Export Functionality
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            if (allProgramsData.length > 0) {
+                exportToExcel(currentProgramIndex);
+            }
+        });
+    }
+
+    function exportToExcel(index) {
+        const item = allProgramsData[index];
+        const prog = item.program;
+        const timeline = item.timeline;
+
+        // Prepare data for Excel
+        const excelData = timeline.map((task, idx) => ({
+            'No.': idx + 1,
+            'Task': task.title,
+            'Due Date': task.due_date,
+            'Status': 'Pending'
+        }));
+
+        // Create worksheet
+        const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+        // Set column widths
+        worksheet['!cols'] = [
+            { wch: 5 },  // No.
+            { wch: 50 }, // Task
+            { wch: 15 }, // Due Date
+            { wch: 12 }  // Status
+        ];
+
+        // Create workbook
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Timeline');
+
+        // Generate filename
+        const filename = `${prog.university}_${prog.name.replace(/[^a-z0-9]/gi, '_')}_Timeline.xlsx`;
+
+        // Download
+        XLSX.writeFile(workbook, filename);
     }
 });
