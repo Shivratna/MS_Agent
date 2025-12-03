@@ -9,6 +9,10 @@ class StudentProfile:
     budget: str
     interests: List[str]
     target_intake: str
+    undergrad_major: str = ""
+    work_experience_years: float = 0.0
+    backlogs: int = 0
+    research_papers: int = 0
     test_scores: Optional[Dict[str, str]] = None
 
 @dataclass

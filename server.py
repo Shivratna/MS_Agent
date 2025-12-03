@@ -1,11 +1,15 @@
 import os
 import uvicorn
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Optional, Any
 from orchestrator import Orchestrator
+from agents.resume_parser import ResumeParserAgent
+from utils.gemini_client import GeminiClient
+import io
+import pypdf
 
 app = FastAPI(title="MS Application Agent API")
 
@@ -26,11 +30,49 @@ class StudentProfileRequest(BaseModel):
     budget: str
     interests: List[str]
     target_intake: str
+    undergrad_major: str = ""
+    work_experience_years: float = 0.0
+    backlogs: int = 0
+    research_papers: int = 0
     test_scores: Optional[Dict[str, str]] = None
 
 from fastapi.responses import StreamingResponse
 import json
 import asyncio
+
+# Resume Parsing Endpoint
+class ResumeTextRequest(BaseModel):
+    text: str
+
+@app.post("/api/parse-resume")
+async def parse_resume(request: ResumeTextRequest):
+    print("[SERVER DEBUG] Parse resume endpoint called")
+    print(f"[SERVER DEBUG] Request text length: {len(request.text)}")
+    
+    if not os.environ.get("GEMINI_API_KEY"):
+        print("[SERVER DEBUG] GEMINI_API_KEY not found")
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not set")
+    
+    print("[SERVER DEBUG] API key found, initializing client")
+    
+    try:
+        # Parse with AI
+        print("[SERVER DEBUG] Creating GeminiClient")
+        client = GeminiClient()
+        print("[SERVER DEBUG] Creating ResumeParserAgent")
+        agent = ResumeParserAgent(client)
+        print("[SERVER DEBUG] Calling agent.parse()")
+        # Limit text to 5000 chars as requested
+        parsed_data = agent.parse(request.text[:5000])
+        
+        print(f"[SERVER DEBUG] Parse result: {parsed_data}")
+        return {"success": True, "data": parsed_data}
+        
+    except Exception as e:
+        print(f"Error parsing resume: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 # API Endpoint
 @app.post("/api/generate-plan-stream")

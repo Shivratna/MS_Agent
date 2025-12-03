@@ -85,6 +85,27 @@
 
                     <!-- Step 1: Profile -->
                     <div class="form-step" data-step="1">
+                        <div class="resume-upload-section">
+                            <label class="resume-label">Paste Resume Text (Optional)</label>
+                            <div class="resume-text-wrapper">
+                                <textarea id="resumeText" placeholder="Paste your resume content here..."
+                                    maxlength="5000"></textarea>
+                                <div class="resume-controls">
+                                    <span class="char-count">0/5000</span>
+                                    <button type="button" id="autoFillBtn" class="secondary-button">
+                                        <span class="icon">✨</span> Auto-fill Profile
+                                    </button>
+                                </div>
+                                <span id="uploadStatus" class="upload-status"></span>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="undergrad_major">Undergraduate Major</label>
+                            <input type="text" id="undergrad_major" name="undergrad_major"
+                                placeholder="e.g. Computer Science, Mechanical Engineering">
+                        </div>
+
                         <div class="input-group">
                             <label for="gpa">GPA (Scale of 4.0)</label>
                             <input type="number" id="gpa" name="gpa" step="0.01" min="0" max="4.0" required
@@ -104,8 +125,25 @@
                         </div>
                     </div>
 
-                    <!-- Step 2: Preferences -->
+                    <!-- Step 2: Preferences & Experience -->
                     <div class="form-step" data-step="2">
+                        <div class="input-group">
+                            <label for="work_experience_years">Work Experience (Years)</label>
+                            <input type="number" id="work_experience_years" name="work_experience_years" step="0.1"
+                                min="0" placeholder="e.g. 2.5">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="backlogs">Number of Backlogs</label>
+                            <input type="number" id="backlogs" name="backlogs" min="0" placeholder="e.g. 0">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="research_papers">Research Papers</label>
+                            <input type="number" id="research_papers" name="research_papers" min="0"
+                                placeholder="e.g. 1">
+                        </div>
+
                         <div class="input-group">
                             <label for="budget">Budget Range</label>
                             <select id="budget" name="budget">
@@ -161,8 +199,22 @@
                         <h2>Your Personalized Plan</h2>
                         <button id="resetBtn" class="secondary-button">Start Over</button>
                     </div>
+
+                    <!-- University Pills -->
+                    <div id="universityPills" class="university-pills-container">
+                        <!-- Pills will be injected here -->
+                    </div>
+
+                    <!-- Export Button (shown for active program) -->
+                    <div class="export-controls">
+                        <button id="exportBtn" class="export-button hidden">
+                            <span class="icon">📥</span> Export Timeline to Excel
+                        </button>
+                    </div>
+
+                    <!-- Single Program Display -->
                     <div id="programsList" class="programs-grid">
-                        <!-- Programs will be injected here -->
+                        <!-- Selected program will be injected here -->
                     </div>
                 </div>
 
@@ -269,6 +321,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <script src="app.js"></script>
 </body>
 
